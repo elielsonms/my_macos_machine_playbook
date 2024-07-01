@@ -1,0 +1,39 @@
+---
+- name: Setup macOS machine
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install Command Line Tools
+      xcode_select:
+        state: present
+
+    - name: Ensure Homebrew is installed
+      raw: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+      register: homebrew_install
+      changed_when: "'Homebrew' not in homebrew_install.stdout"
+
+    - name: Ensure Homebrew path is in the environment
+      lineinfile:
+        path: /Users/{{ ansible_user }}/.zprofile
+        line: 'eval "$(/opt/homebrew/bin/brew shellenv)"'
+        create: yes
+        state: present
+
+    - name: Install Brew Packages
+      homebrew:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - git
+        - --cask opera
+        - --cask intellij-idea-ce
+        - --cask dbeaver-community
+
+    - name: Ensure Brew Services are started (optional)
+      homebrew_services:
+        name: "{{ item }}"
+        state: started
+      loop:
+        # List any brew services you want to start
+        # e.g., postgresql, redis, etc.
+        - 
